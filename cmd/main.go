@@ -12,7 +12,9 @@ import (
 	"os"
 	"os/signal"
 	"time"
+	"typo_back"
 	"typo_back/assets"
+	"typo_back/pkg/handler"
 )
 
 var db *mgo.Database
@@ -49,7 +51,7 @@ func init() {
 	//db = sess.DB(dbName)
 }
 
-func main() {
+func main2() {
 	stopChan := make(chan os.Signal)
 	signal.Notify(stopChan, os.Interrupt)
 	r := chi.NewRouter()
@@ -78,6 +80,15 @@ func main() {
 	}
 
 	defer cancel()
+}
+
+func main() {
+	srv := new(typo_back.Server)
+	srvHandler := new(handler.Handler)
+	log.Println("listening on port", ":8000")
+	if err := srv.Run("8000", srvHandler.InitRoutes()); err != nil {
+		log.Fatalf("something went wrong while running server %s", err.Error())
+	}
 }
 
 func wordsHandlers() http.Handler {
