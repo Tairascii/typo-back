@@ -6,9 +6,15 @@ import (
 	"log"
 	"net/http"
 	"typo_back/assets"
+	"typo_back/pkg/service"
 )
 
 type Handler struct {
+	services *service.Service
+}
+
+func NewHandler(service *service.Service) *Handler {
+	return &Handler{}
 }
 
 func (h *Handler) InitRoutes() *chi.Mux {

@@ -15,6 +15,8 @@ import (
 	"typo_back"
 	"typo_back/assets"
 	"typo_back/pkg/handler"
+	"typo_back/pkg/repository"
+	"typo_back/pkg/service"
 )
 
 var db *mgo.Database
@@ -83,10 +85,12 @@ func main2() {
 }
 
 func main() {
+	repos := repository.NewRepository()
+	services := service.NewService(repos)
+	handlers := handler.NewHandler(services)
 	srv := new(typo_back.Server)
-	srvHandler := new(handler.Handler)
 	log.Println("listening on port", ":8000")
-	if err := srv.Run("8000", srvHandler.InitRoutes()); err != nil {
+	if err := srv.Run("8000", handlers.InitRoutes()); err != nil {
 		log.Fatalf("something went wrong while running server %s", err.Error())
 	}
 }
