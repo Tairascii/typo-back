@@ -3,9 +3,7 @@ package handler
 import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
-	"log"
 	"net/http"
-	"typo_back/assets"
 	"typo_back/pkg/service"
 )
 
@@ -20,7 +18,7 @@ func NewHandler(service *service.Service) *Handler {
 func (h *Handler) InitRoutes() *chi.Mux {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
-	r.Mount("/words", wordsHandlers())
+	r.Mount("/words", wordsHandlers(h))
 	r.Mount("/auth", authHandlers(h))
 	return r
 }
@@ -39,30 +37,13 @@ func authHandlers(h *Handler) http.Handler {
 	return rg
 }
 
-func wordsHandlers() http.Handler {
+func wordsHandlers(h *Handler) http.Handler {
 	rg := chi.NewRouter()
 	rg.Group(func(r chi.Router) {
 		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-			fetchWords(w, r)
+			h.fetchWords(w, r)
 		})
 	})
 
 	return rg
-}
-
-func generateRandomWords() []string {
-	return assets.Words
-}
-
-func fetchWords(w http.ResponseWriter, r *http.Request) {
-	words := generateRandomWords()
-
-	log.Println(words)
-	//err := rnd.JSON(w, http.StatusOK, renderer.M{
-	//	"data": words,
-	//})
-	//
-	//if err != nil {
-	//	log.Println("something wrong with words")
-	//}
 }

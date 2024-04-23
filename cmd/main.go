@@ -4,16 +4,15 @@ import (
 	"context"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/spf13/viper"
 	"github.com/thedevsaddam/renderer"
 	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
 	"typo_back"
-	"typo_back/assets"
 	"typo_back/pkg/handler"
 	"typo_back/pkg/repository"
 	"typo_back/pkg/service"
@@ -29,28 +28,10 @@ const (
 	port           string = ":9000"
 )
 
-type (
-	resultModel struct {
-		Id        bson.ObjectId `bson:"_id,omitempty"`
-		WPM       int16         `bson:"wpm"`
-		Accuracy  int8          `bson:"accuracy"`
-		Timestamp time.Time     `bson:"timestamp"`
-	}
-	result struct {
-		ID        string    `json:"id"`
-		WPM       int16     `json:"WPM"`
-		Accuracy  int8      `json:"accuracy"`
-		Timestamp time.Time `json:"timestamp"`
-	}
-)
-
-func init() {
-	//sess, err := mgo.Dial(hostName)
-	rnd = renderer.New()
-	//checkError(err, "something with db")
-
-	//sess.SetMode(mgo.Monotonic, true)
-	//db = sess.DB(dbName)
+func initConfigs() error {
+	viper.AddConfigPath("configs")
+	viper.SetConfigName("config")
+	return viper.ReadInConfig()
 }
 
 func main2() {
@@ -58,7 +39,6 @@ func main2() {
 	signal.Notify(stopChan, os.Interrupt)
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
-	r.Mount("/words", wordsHandlers())
 
 	srv := &http.Server{
 		Addr:         port,
@@ -85,44 +65,19 @@ func main2() {
 }
 
 func main() {
-	repos := repository.NewRepository()
+	if err := initConfigs(); err != nil {
+		log.Fatalf("something with configs: %s", err.Error())
+	}
+	db, conErr := repository.NewMongoDB(context.Background())
+	if conErr != nil {
+		log.Fatalf("error while connecting to db %s", conErr.Error())
+	}
+	repos := repository.NewRepository(db)
 	services := service.NewService(repos)
 	handlers := handler.NewHandler(services)
 	srv := new(typo_back.Server)
 	log.Println("listening on port", ":8000")
-	if err := srv.Run("8000", handlers.InitRoutes()); err != nil {
+	if err := srv.Run(viper.GetString("port"), handlers.InitRoutes()); err != nil {
 		log.Fatalf("something went wrong while running server %s", err.Error())
-	}
-}
-
-func wordsHandlers() http.Handler {
-	rg := chi.NewRouter()
-	rg.Group(func(r chi.Router) {
-		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-			fetchWords(w, r)
-		})
-	})
-	return rg
-}
-
-func generateRandomWords() []string {
-	return assets.Words
-}
-
-func fetchWords(w http.ResponseWriter, r *http.Request) {
-	words := generateRandomWords()
-
-	err := rnd.JSON(w, http.StatusOK, renderer.M{
-		"data": words,
-	})
-
-	if err != nil {
-		log.Println("something wrong with words")
-	}
-}
-
-func checkError(err error, msg string) {
-	if err != nil {
-		log.Fatal(msg)
 	}
 }
