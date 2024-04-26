@@ -1,8 +1,13 @@
 package service
 
-import "typo_back/pkg/repository"
+import (
+	"context"
+	"typo_back"
+	"typo_back/pkg/repository"
+)
 
 type Auth interface {
+	CreateUser(ctx context.Context, user typo_back.User) (int, error)
 }
 
 type Service struct {
@@ -10,5 +15,7 @@ type Service struct {
 }
 
 func NewService(repos *repository.Repository) *Service {
-	return &Service{}
+	return &Service{
+		Auth: NewAuthService(repos.Auth),
+	}
 }

@@ -12,7 +12,7 @@ type Handler struct {
 }
 
 func NewHandler(service *service.Service) *Handler {
-	return &Handler{}
+	return &Handler{services: service}
 }
 
 func (h *Handler) InitRoutes() *chi.Mux {

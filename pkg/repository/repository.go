@@ -1,8 +1,14 @@
 package repository
 
-import "go.mongodb.org/mongo-driver/mongo"
+import (
+	"context"
+	"github.com/spf13/viper"
+	"go.mongodb.org/mongo-driver/mongo"
+	"typo_back"
+)
 
 type Auth interface {
+	CreateUser(ctx context.Context, user typo_back.User) (int, error)
 }
 
 type Repository struct {
@@ -10,5 +16,5 @@ type Repository struct {
 }
 
 func NewRepository(db *mongo.Client) *Repository {
-	return &Repository{}
+	return &Repository{Auth: NewUserDAO(db, viper.GetString("db.name"), "user")}
 }
