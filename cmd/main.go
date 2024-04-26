@@ -65,10 +65,15 @@ func main2() {
 }
 
 func main() {
+	db, conErr := repository.NewMongoDB(context.Background())
+	defer func() {
+		if err := db.Disconnect(context.Background()); err != nil {
+			log.Fatalf("something went wrong while disconnecting %s", err.Error())
+		}
+	}()
 	if err := initConfigs(); err != nil {
 		log.Fatalf("something with configs: %s", err.Error())
 	}
-	db, conErr := repository.NewMongoDB(context.Background())
 	if conErr != nil {
 		log.Fatalf("error while connecting to db %s", conErr.Error())
 	}

@@ -19,7 +19,7 @@ func (dao *UserDAO) CreateUser(ctx context.Context, user typo_back.User) (int, e
 	result, err := dao.c.InsertOne(ctx, user)
 
 	if err != nil {
-		log.Fatalf("something went wrong while inserting")
+		log.Fatalf("something went wrong while inserting %s", err.Error())
 	}
 	log.Println(result)
 	return 0, nil
