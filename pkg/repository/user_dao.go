@@ -2,8 +2,8 @@ package repository
 
 import (
 	"context"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"log"
 	"typo_back"
 )
 
@@ -15,12 +15,14 @@ func NewUserDAO(client *mongo.Client, dbName string, collection string) *UserDAO
 	return &UserDAO{c: client.Database(dbName).Collection(collection)}
 }
 
-func (dao *UserDAO) CreateUser(ctx context.Context, user typo_back.User) (int, error) {
+func (dao *UserDAO) CreateUser(ctx context.Context, user typo_back.User) (primitive.ObjectID, error) {
 	result, err := dao.c.InsertOne(ctx, user)
 
 	if err != nil {
-		log.Fatalf("something went wrong while inserting %s", err.Error())
+		return primitive.ObjectID{}, err
 	}
-	log.Println(result)
-	return 0, nil
+
+	insertedID := result.InsertedID.(primitive.ObjectID)
+
+	return insertedID, nil
 }

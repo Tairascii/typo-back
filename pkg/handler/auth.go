@@ -19,17 +19,32 @@ func (h *Handler) signUp(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		log.Println("something went wrong when getting body from request for sign up")
+		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
+
 	var user typo_back.User
 	if err := json.Unmarshal(userBody, &user); err != nil {
-		log.Fatalf(err.Error())
+		log.Println(err.Error())
+		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
 
 	userId, err := h.services.Auth.CreateUser(ctx, user)
 
-	log.Println(userId)
-
 	if err != nil {
 		log.Println(err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	response := struct {
+		Id string `json:"id"`
+	}{Id: userId.Hex()}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 }
